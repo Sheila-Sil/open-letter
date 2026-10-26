@@ -245,6 +245,7 @@ async function explain() {
   const token = ++state.token;
   state.drawingPageId = null;
   state.letterText = state.pages.map(visibleText).join('\n');
+  render(state.pages[0], $('#loading-canvas'));
   show('loading', { push: false });
   const progress = runProgress();
 
@@ -393,6 +394,7 @@ function renderResult() {
   if (r.actions.length) {
     html.push(`
       <section class="section"><h2>${icon('check-circle')}${t('todo_title')}</h2>
+        <div class="todo-progress"><div class="todo-bar"><span id="todo-bar"></span></div><p class="todo-count" id="todo-count" aria-live="polite"></p></div>
         <ol class="todo">${r.actions.map((action, i) => {
           const done = state.checked.has(i);
           return `
@@ -406,6 +408,7 @@ function renderResult() {
               </div>
             </li>`;
         }).join('')}</ol>
+        <p class="all-done" id="all-done" hidden>${icon('check-circle')}<span>${t('all_done')}</span></p>
       </section>`);
   }
 
@@ -451,6 +454,16 @@ function renderResult() {
     <p class="disclaimer">${icon('info')}<span>${t('result_disclaimer')}</span></p>`);
 
   $('#result').innerHTML = html.join('');
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = state.result.data.actions.length;
+  if (!total) return;
+  const done = state.checked.size;
+  $('#todo-bar').style.width = `${(done / total) * 100}%`;
+  $('#todo-count').textContent = t('progress', { done, total });
+  $('#all-done').hidden = done !== total;
 }
 
 function toggleCheck(index) {
@@ -459,6 +472,7 @@ function toggleCheck(index) {
   const done = state.checked.has(index);
   $(`.todo-item[data-index="${index}"]`).classList.toggle('is-done', done);
   $(`.check[data-index="${index}"]`).setAttribute('aria-checked', done);
+  updateProgress();
 }
 
 // ---------- Read aloud ----------
