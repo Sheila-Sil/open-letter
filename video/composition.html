@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Open Letter: demo video</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+  /* A 1920x1080 stage. record.mjs drives it scene by scene, in time with the voiceover script. */
+  :root {
+    --bg: #ece9e4; --bg-2: #f4f2ee; --ink: #1c1c1c; --ink-2: #55524d; --line: #d9d5ce;
+    --dark: #232323; --lavender: #cdc3f0; --violet: #8b6cf6; --peach: #f2b99a;
+    --serif: "Newsreader", Georgia, serif; --sans: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+    --ease: cubic-bezier(.2, .8, .2, 1);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: clip; background: #000; }
+  #stage { position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; overflow: clip; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+
+  .layer { position: absolute; inset: 0; overflow: clip; opacity: 0; visibility: hidden; transition: opacity .9s var(--ease), visibility 0s .9s; }
+  .layer.on { opacity: 1; visibility: visible; transition: opacity .9s var(--ease), visibility 0s; }
+  .dark { background: var(--dark); color: #fff; }
+
+  .serif { font-family: var(--serif); font-weight: 400; letter-spacing: -0.035em; line-height: 1; }
+  .mono { font-family: var(--mono); font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
+  .label { display: flex; align-items: center; gap: 14px; font-size: 22px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--violet); flex: none; }
+
+  /* Things that slide up into place */
+  .rise { opacity: 0; transform: translateY(40px); transition: opacity .8s var(--ease), transform .9s var(--ease); }
+  .rise.in { opacity: 1; transform: none; }
+
+  #chapter { position: absolute; left: 72px; top: 60px; font-size: 20px; color: var(--ink-2); z-index: 30; opacity: 0; transition: opacity .6s; }
+  #chapter.on { opacity: 1; }
+  #chapter.light { color: #a9a6a0; }
+
+  /* ---------- Hook ---------- */
+  #hook-paper { position: absolute; left: 50%; top: 50%; width: 760px; transform-origin: 50% 40%;
+    transform: translate(-50%, -38%) rotate(-4deg) scale(.9); opacity: 0; box-shadow: 0 40px 90px rgb(0 0 0 / 50%);
+    transition: opacity 1.2s var(--ease), transform 1.4s var(--ease); }
+  #hook-paper.in { opacity: 1; transform: translate(-50%, -50%) rotate(-2deg) scale(1); }
+  #hook-paper.drift { transition: transform 12s linear; transform: translate(-50%, -38%) rotate(0deg) scale(1.75); }
+  #hook-paper canvas { display: block; width: 100%; }
+  #hook-label { position: absolute; left: 72px; top: 60px; color: #a9a6a0; }
+  .vignette { position: absolute; inset: 0; background: radial-gradient(70% 70% at 50% 50%, transparent 40%, rgb(0 0 0 / 55%)); pointer-events: none; }
+
+  /* ---------- Problem ---------- */
+  #stakes { position: absolute; left: 160px; top: 230px; }
+  #stakes .label { margin-bottom: 40px; }
+  #stakes .line { font-size: 150px; margin-bottom: 18px; }
+  #stakes .line:nth-child(4) { color: var(--violet); }
+
+  #confusing { position: absolute; left: 130px; top: 270px; width: 780px; }
+  #confusing .line { font-size: 80px; line-height: 1.05; margin-bottom: 34px; }
+  #letter-crop { position: absolute; right: 120px; top: 170px; width: 830px; height: 740px; overflow: hidden; border-radius: 6px; background: #fff;
+    box-shadow: 0 30px 70px rgb(0 0 0 / 18%); }
+  #letter-crop canvas { position: absolute; width: 940px; left: -36px; }
+  #deadline-mark { position: absolute; background: rgb(139 108 246 / 30%); border-bottom: 4px solid var(--violet); transform-origin: left; transform: scaleX(0); transition: transform 1.1s var(--ease); }
+  #deadline-mark.in { transform: scaleX(1); }
+
+  #words { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  #words .line { font-size: 120px; }
+  #words .line + .line { margin-top: 26px; color: var(--violet); }
+
+  /* ---------- Intro ---------- */
+  .lines { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .lines line { --c: var(--ink); stroke: var(--c); stroke-width: calc(var(--w) * 1px); vector-effect: non-scaling-stroke; animation: sweep 6s ease-in-out infinite; animation-delay: calc(var(--i) * 45ms); }
+  .lines line.violet { --c: var(--violet); }
+  .lines line.peach { --c: var(--peach); }
+  @keyframes sweep { 0%, 7%, 100% { stroke: var(--c); stroke-width: calc(var(--w) * 1px); } 2.5% { stroke: var(--violet); stroke-width: calc(var(--w) * 1px + 8px); } }
+  #intro-lines { opacity: .22; }
+  #logo { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  #logo svg { width: 120px; height: 120px; margin-bottom: 36px; }
+  #logo .name { font-size: 200px; }
+  #logo .tag { margin-top: 44px; font-size: 26px; }
+  .stroke-icon { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+  #browser { position: absolute; left: 50%; top: 50%; width: 1296px; transform: translate(-50%, -46%) scale(.96); border-radius: 14px; overflow: hidden;
+    background: #fff; box-shadow: 0 40px 100px rgb(0 0 0 / 22%); transition: transform 1.2s var(--ease); }
+  #s-browser.on #browser { transform: translate(-50%, -50%) scale(1); }
+  .chrome { display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 18px; background: #e3e0da; }
+  .chrome i { width: 13px; height: 13px; border-radius: 50%; background: #c9c5be; }
+  .chrome .url { margin-left: 18px; padding: 6px 18px; border-radius: 8px; background: #f4f2ee; font-size: 16px; color: var(--ink-2); font-family: var(--sans); }
+  #desk-frame { display: block; width: 1440px; height: 900px; border: 0; transform: scale(.9); transform-origin: 0 0; margin-bottom: -90px; margin-right: -144px; }
+
+  /* ---------- Phone scenes ---------- */
+  #rig { position: absolute; left: 330px; top: 96px; width: 418px; height: 872px; transition: transform 1.3s var(--ease), transform-origin 1.3s var(--ease); z-index: 5; }
+  .phone { position: absolute; inset: 0; padding: 14px; border-radius: 58px; background: var(--ink); box-shadow: 0 40px 90px rgb(0 0 0 / 25%); }
+  #phone-frame { display: block; width: 390px; height: 844px; border: 0; border-radius: 44px; background: var(--bg); }
+  #phone-note { position: absolute; left: 330px; width: 418px; top: 998px; text-align: center; font-size: 17px; color: var(--ink-2); z-index: 4; transition: opacity .5s; }
+  #stage.zoomed #chapter.on, #stage.zoomed #phone-note { opacity: 0; }
+
+  #caption { position: absolute; left: 930px; top: 300px; width: 860px; z-index: 6; }
+  #caption-title { font-size: 92px; min-height: 200px; }
+  #caption-labels { margin-top: 48px; display: grid; gap: 22px; }
+  #caption-labels .label { font-size: 24px; }
+
+  /* Overlays near the phone */
+  .float { position: absolute; z-index: 8; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 24px 50px rgb(0 0 0 / 14%); opacity: 0; transform: translateY(24px) scale(.96); transition: opacity .6s var(--ease), transform .7s var(--ease); }
+  .float.in { opacity: 1; transform: none; }
+  #wave { left: 690px; top: 720px; padding: 22px 26px; display: flex; align-items: center; gap: 7px; height: 104px; }
+  #wave span { width: 7px; border-radius: 4px; background: var(--violet); animation: bar 1s ease-in-out infinite; }
+  @keyframes bar { 0%, 100% { height: 14px; } 50% { height: 58px; } }
+  #reminder { left: 690px; top: 690px; padding: 24px 28px; width: 290px; }
+  #reminder .mono { font-size: 15px; color: var(--ink-2); }
+  #reminder .serif { font-size: 56px; margin: 10px 0 8px; }
+  #reminder p { font-size: 18px; color: var(--ink-2); }
+
+  #tap { position: absolute; z-index: 40; width: 72px; height: 72px; margin: -36px 0 0 -36px; border-radius: 50%;
+    background: rgb(139 108 246 / 28%); border: 3px solid var(--violet); opacity: 0; pointer-events: none; }
+  #tap.go { animation: tap .75s var(--ease); }
+  @keyframes tap { 0% { opacity: 0; transform: scale(.4); } 25% { opacity: 1; transform: scale(.85); } 100% { opacity: 0; transform: scale(1.5); } }
+  #finger { position: absolute; z-index: 40; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: rgb(139 108 246 / 35%); border: 3px solid var(--violet); opacity: 0; pointer-events: none; transition: opacity .3s; }
+  #finger.on { opacity: 1; }
+
+  /* ---------- How it's built ---------- */
+  #built-title { position: absolute; left: 140px; top: 150px; font-size: 104px; }
+  #flow { position: absolute; left: 140px; right: 140px; top: 360px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 56px; }
+  .step { position: relative; background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px; padding: 30px 28px; min-height: 270px; }
+  .step:nth-child(2) { background: #e3dfd8; }
+  .step:nth-child(3) { background: var(--lavender); border-color: transparent; }
+  .step:nth-child(4) { background: #fff; }
+  .step .mono { font-size: 17px; color: var(--ink-2); }
+  .step h3 { font-family: var(--serif); font-weight: 400; font-size: 46px; letter-spacing: -0.02em; line-height: 1.05; margin: 22px 0 14px; }
+  .step p { font-size: 21px; color: var(--ink-2); line-height: 1.4; }
+  .step + .step::before { content: ""; position: absolute; left: -50px; top: 50%; width: 44px; border-top: 2px dashed #a7a29a; }
+  #chips { position: absolute; left: 140px; right: 140px; top: 700px; display: flex; flex-wrap: wrap; gap: 14px; }
+  .chip { padding: 14px 20px; border-radius: 8px; background: #fff; border: 1px solid var(--line); font-size: 19px; }
+  #repo { position: absolute; left: 140px; top: 860px; font-size: 30px; display: flex; align-items: center; gap: 16px; }
+
+  /* ---------- Close ---------- */
+  #close-lines { opacity: .12; }
+  #close-lines line { --c: #fff; }
+  #end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  #end svg { width: 104px; height: 104px; margin-bottom: 30px; }
+  #end .name { font-size: 190px; }
+  #end .sub { font-family: var(--serif); font-size: 54px; letter-spacing: -0.02em; color: #d8d5cf; margin-top: 34px; }
+  #end .url { margin-top: 60px; font-size: 28px; padding: 18px 30px; border-radius: 999px; background: #fff; color: var(--ink); letter-spacing: .04em; text-transform: none; }
+  #end .small { margin-top: 36px; font-size: 18px; color: #a9a6a0; }
+  #blackout { position: absolute; inset: 0; background: #000; opacity: 0; z-index: 50; transition: opacity 1.4s; pointer-events: none; }
+  #blackout.on { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="chapter" class="mono"></div>
+
+  <!-- 0:00 Hook -->
+  <section class="layer dark" id="s-hook">
+    <div id="hook-paper"></div>
+    <div class="vignette"></div>
+    <p id="hook-label" class="mono label rise"><span class="dot"></span>Official mail</p>
+  </section>
+
+  <!-- 0:15 The problem -->
+  <section class="layer" id="s-stakes">
+    <div id="stakes">
+      <p class="mono label rise"><span class="dot"></span>What one letter can decide</p>
+      <p class="serif line rise">Health coverage.</p>
+      <p class="serif line rise">Food on the table.</p>
+      <p class="serif line rise">A home.</p>
+    </div>
+  </section>
+  <section class="layer" id="s-confusing">
+    <div id="confusing">
+      <p class="serif line rise">Confusing language.</p>
+      <p class="serif line rise">Often only in English.</p>
+      <p class="serif line rise">The deadline, buried in a paragraph.</p>
+    </div>
+    <div id="letter-crop" class="rise"><div id="deadline-mark"></div></div>
+  </section>
+  <section class="layer" id="s-words">
+    <div id="words">
+      <p class="serif line rise">Translation apps give you the words.</p>
+      <p class="serif line rise">Not what to do.</p>
+    </div>
+  </section>
+
+  <!-- 0:35 Introducing Open Letter -->
+  <section class="layer" id="s-intro">
+    <svg class="lines" id="intro-lines" viewBox="0 0 1000 300" preserveAspectRatio="none"></svg>
+    <div id="logo">
+      <svg viewBox="0 0 24 24" class="stroke-icon rise"><path d="M21.2 8.4c.5.38.8.97.8 1.6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10a2 2 0 0 1 .8-1.6l8-6a2 2 0 0 1 2.4 0l8 6Z"/><path d="m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10"/></svg>
+      <p class="serif name rise">Open Letter</p>
+      <p class="mono tag rise">Any official letter · explained in your language</p>
+    </div>
+  </section>
+  <section class="layer" id="s-browser">
+    <div id="browser">
+      <div class="chrome"><i></i><i></i><i></i><span class="url">sheila-sil.github.io/open-letter</span></div>
+      <iframe id="desk-frame" title="Open Letter on a computer"></iframe>
+    </div>
+  </section>
+
+  <!-- 0:45 to 2:25 The app on a phone -->
+  <section class="layer" id="s-phone">
+    <div id="rig"><div class="phone"><iframe id="phone-frame" title="Open Letter on a phone"></iframe></div></div>
+    <p id="phone-note" class="mono">Built-in example letter</p>
+    <div id="caption">
+      <p id="caption-title" class="serif"></p>
+      <div id="caption-labels"></div>
+    </div>
+    <div class="float" id="wave"></div>
+    <div class="float" id="reminder">
+      <p class="mono">Reminder</p>
+      <p class="serif" id="reminder-date"></p>
+      <p>3 days before the deadline</p>
+    </div>
+  </section>
+
+  <!-- 2:25 How it's built -->
+  <section class="layer" id="s-built">
+    <h2 id="built-title" class="serif rise">How it works inside</h2>
+    <div id="flow">
+      <div class="step rise"><p class="mono">01 · On the phone</p><h3>Private numbers covered</h3><p>Text recognition runs on the device and hides SSNs, account and case numbers.</p></div>
+      <div class="step rise"><p class="mono">02 · Python server</p><h3>Checked, never stored</h3><p>Makes sure it's a real image, limits abuse, and keeps nothing.</p></div>
+      <div class="step rise"><p class="mono">03 · AI</p><h3>A strict format</h3><p>A word-for-word quote for every fact. No made-up numbers or dates.</p></div>
+      <div class="step rise"><p class="mono">04 · Back on the phone</p><h3>Quotes double-checked</h3><p>Every quote is matched against the letter's own text.</p></div>
+    </div>
+    <div id="chips"></div>
+    <p id="repo" class="mono rise"><span class="dot"></span>Open source · github.com/Sheila-Sil/open-letter</p>
+  </section>
+
+  <!-- 2:45 Close -->
+  <section class="layer dark" id="s-close">
+    <svg class="lines" id="close-lines" viewBox="0 0 1000 300" preserveAspectRatio="none"></svg>
+    <div id="end">
+      <svg viewBox="0 0 24 24" class="stroke-icon rise"><path d="M21.2 8.4c.5.38.8.97.8 1.6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10a2 2 0 0 1 .8-1.6l8-6a2 2 0 0 1 2.4 0l8 6Z"/><path d="m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10"/></svg>
+      <p class="serif name rise">Open Letter</p>
+      <p class="sub rise">Any official letter, explained in your language.</p>
+      <p class="mono url rise">sheila-sil.github.io/open-letter</p>
+      <p class="mono small rise">Congressional App Challenge · 2026</p>
+    </div>
+  </section>
+
+  <div id="tap"></div>
+  <div id="finger"></div>
+  <div id="blackout"></div>
+</div>
+
+<script type="module">
+  import { drawSampleLetter, todayUTC } from '../frontend/js/sample.js';
+
+  const $ = (s) => document.querySelector(s);
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // Start every take in English.
+  try { localStorage.setItem('open-letter-lang', 'en'); } catch {}
+  $('#phone-frame').src = '../frontend/?video';
+  $('#desk-frame').src = '../frontend/?video-desk';
+
+  // Draw the example letter, remembering where each line of text went (for highlights).
+  const marks = [];
+  const fillText = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (text, x, y) {
+    marks.push({ text, x, y, w: this.measureText(text).width });
+    return fillText.apply(this, arguments);
+  };
+  const letterA = drawSampleLetter();
+  const letterB = drawSampleLetter();
+  CanvasRenderingContext2D.prototype.fillText = fillText;
+  $('#hook-paper').appendChild(letterA);
+  $('#letter-crop').prepend(letterB);
+
+  // Highlight the deadline sentence inside the cropped letter (letter is drawn at 1530/1275 = 1.2x there).
+  const deadline = marks.find((m) => m.text.startsWith('Your renewal must'));
+  const k = 940 / 1275;
+  const cropTop = 300 - deadline.y * k;
+  letterB.style.top = `${cropTop}px`;
+  Object.assign($('#deadline-mark').style, {
+    left: `${-36 + (deadline.x - 8) * k}px`, top: `${cropTop + (deadline.y - 26) * k}px`,
+    width: `${(deadline.w + 16) * k}px`, height: `${34 * k}px`,
+  });
+
+  function drawLines(svg, perRow) {
+    const widths = [1, 1.5, 2.5, 3.5, 4.5];
+    let out = '';
+    for (let row = 0; row < 2; row++) {
+      for (let i = 0; i < perRow; i++) {
+        const n = row * perRow + i;
+        const x = ((i + 0.5 + row * 0.5) / (perRow + 0.5)) * 1000;
+        const cls = n % 17 === 5 ? 'violet' : n % 23 === 11 ? 'peach' : '';
+        const lean = (row === 0 && i === 6) || (row === 1 && i === perRow - 9);
+        out += `<line class="${cls}" x1="${x}" y1="${row * 150 + 4}" x2="${lean ? x + (row ? -30 : 30) : x}" y2="${row * 150 + 146}" style="--w:${widths[(n * 7 + Math.floor(n / 3)) % 5]};--i:${i}"/>`;
+      }
+    }
+    svg.innerHTML = out;
+  }
+  drawLines($('#intro-lines'), 84);
+  drawLines($('#close-lines'), 84);
+
+  $('#wave').innerHTML = Array.from({ length: 14 }, (_, i) => `<span style="animation-delay:${(i % 7) * 0.12}s"></span>`).join('');
+  const remind = new Date(+todayUTC() + 18 * 86400000);
+  $('#reminder-date').textContent = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(remind);
+  $('#chips').innerHTML = ['Python · FastAPI', 'JavaScript', 'Tesseract.js OCR', 'Gemini or Claude', '5 languages · right-to-left', '21 automated tests', 'Works on any phone']
+    .map((c) => `<span class="chip mono rise">${c}</span>`).join('');
+
+  // ---------- Helpers the recorder calls ----------
+
+  function only(id) {
+    document.querySelectorAll('.layer').forEach((l) => l.classList.toggle('on', l.id === id));
+  }
+  async function rise(selector, gap = 0) {
+    for (const el of document.querySelectorAll(selector)) {
+      el.classList.add('in');
+      if (gap) await wait(gap);
+    }
+  }
+  function chapter(text, light = false) {
+    const el = $('#chapter');
+    el.classList.toggle('light', light);
+    if (!text) return el.classList.remove('on');
+    el.textContent = text;
+    el.classList.add('on');
+  }
+
+  window.V = {
+    async hook() {
+      only('s-hook');
+      await wait(400);
+      $('#hook-paper').classList.add('in');
+      await wait(900);
+      $('#hook-label').classList.add('in');
+      await wait(700);
+      $('#hook-paper').classList.add('drift');
+    },
+    async stakes() {
+      only('s-stakes');
+      chapter('01 — The problem');
+      await wait(500);
+      await rise('#stakes .rise', 1900);
+    },
+    async confusing() {
+      only('s-confusing');
+      $('#letter-crop').classList.add('in');
+      await wait(500);
+      const lines = document.querySelectorAll('#confusing .rise');
+      lines[0].classList.add('in'); await wait(2000);
+      lines[1].classList.add('in'); await wait(2000);
+      lines[2].classList.add('in'); await wait(500);
+      $('#deadline-mark').classList.add('in');
+    },
+    async words() {
+      only('s-words');
+      await wait(500);
+      await rise('#words .rise', 2600);
+    },
+    async intro() {
+      only('s-intro');
+      chapter('02 — Open Letter');
+      await wait(300);
+      await rise('#logo .rise', 450);
+    },
+    browser() { only('s-browser'); },
+    scrollDesk(y) { $('#desk-frame').contentWindow.scrollTo({ top: y, behavior: 'smooth' }); },
+
+    phone(chapterText) {
+      only('s-phone');
+      chapter(chapterText);
+    },
+    chapter,
+    caption(title) {
+      const t = $('#caption-title');
+      t.classList.remove('in');
+      t.classList.add('rise');
+      setTimeout(() => { t.textContent = title; t.classList.add('in'); }, 250);
+      $('#caption-labels').innerHTML = '';
+    },
+    label(text) {
+      const el = document.createElement('p');
+      el.className = 'mono label rise';
+      el.innerHTML = `<span class="dot"></span>${text}`;
+      $('#caption-labels').appendChild(el);
+      requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('in')));
+    },
+    // Zoom the "camera" in on a point of the phone screen (in the app's own CSS pixels).
+    focus(x, y, scale) {
+      const rig = $('#rig');
+      rig.style.transformOrigin = `${14 + x}px ${14 + y}px`;
+      rig.style.transform = `scale(${scale})`;
+      $('#stage').classList.toggle('zoomed', scale > 1.01);
+    },
+    unfocus() { $('#rig').style.transform = 'scale(1)'; $('#stage').classList.remove('zoomed'); },
+    tap(x, y) {
+      const el = $('#tap');
+      Object.assign(el.style, { left: `${x}px`, top: `${y}px` });
+      el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');
+    },
+    finger(x, y, on = true) {
+      const el = $('#finger');
+      Object.assign(el.style, { left: `${x}px`, top: `${y}px` });
+      el.classList.toggle('on', on);
+    },
+    float(id, on) { $(`#${id}`).classList.toggle('in', on); },
+    app() { return $('#phone-frame').contentWindow; },
+
+    async built() {
+      only('s-built');
+      chapter('07 — How it’s built');
+      await wait(400);
+      $('#built-title').classList.add('in');
+      await wait(900);
+      await rise('#flow .rise', 1500);
+      await wait(1200);
+      await rise('#chips .rise', 450);
+      await wait(800);
+      $('#repo').classList.add('in');
+    },
+    async close() {
+      only('s-close');
+      chapter('');
+      await wait(500);
+      await rise('#end .rise', 700);
+    },
+    blackout() { $('#blackout').classList.add('on'); },
+  };
+
+  // Tell the recorder when both copies of the app are ready.
+  let loaded = 0;
+  for (const f of [$('#phone-frame'), $('#desk-frame')]) f.addEventListener('load', () => { if (++loaded === 2) window.READY = true; });
+</script>
+</body>
+</html>
