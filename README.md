@@ -58,6 +58,10 @@ To test on your phone, run `uvicorn backend.main:app --host 0.0.0.0` and open `h
 
 ## Put it online (so judges can use it)
 
+**Free, no key needed:** the app is published to GitHub Pages at https://sheila-sil.github.io/open-letter/ every time you push to `main` (see `.github/workflows/pages.yml`). The example letter works there completely. Real photos get their private numbers hidden, but explaining them needs the Python server and an API key, described below. One-time setup: in the repo, go to **Settings → Pages** and set **Source** to **GitHub Actions**.
+
+**Full version with AI:**
+
 Any host that runs Python works. For example, on [Render](https://render.com):
 
 1. Push this folder to a GitHub repository.

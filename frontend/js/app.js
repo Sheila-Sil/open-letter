@@ -281,7 +281,9 @@ async function requestExplanation() {
     throw new AppError('network');
   }
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new AppError(body.error || 'generic');
+  // A site hosted without the Python server (like GitHub Pages) has no /api, so explain that instead.
+  const noServer = [404, 405, 501].includes(response.status);
+  if (!response.ok) throw new AppError(body.error || (noServer ? 'not_configured' : 'generic'));
   return body.result;
 }
 
