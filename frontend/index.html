@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Open Letter</title>
   <meta name="description" content="Take a photo of a confusing official letter. Get a plain-language explanation in your language, the deadline, and what to do next.">
-  <meta name="theme-color" content="#1d3461">
+  <meta name="theme-color" content="#ece9e4">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
   <link rel="stylesheet" href="css/styles.css">
   <script type="module" src="js/app.js"></script>
 </head>
@@ -53,20 +53,20 @@
   </svg>
 
   <a class="skip-link" href="#main" data-i18n="skip">Skip to main content</a>
-  <div class="strip"><div class="wrap" data-i18n="strip_note">A free student project. Not a government website.</div></div>
+  <p class="strip"><span data-i18n="strip_note">A free student project. Not a government website.</span></p>
 
   <header class="site-header">
-    <div class="wrap header-inner">
+    <nav class="nav">
       <a class="brand" href="./" data-action="home">
-        <span class="brand-mark"><svg class="icon"><use href="#i-mail"/></svg></span>
+        <svg class="icon brand-icon"><use href="#i-mail"/></svg>
         <span class="brand-name">Open Letter</span>
       </a>
       <button class="lang-pill" type="button" data-action="open-lang" aria-haspopup="dialog" data-i18n-attr="aria-label: choose_language">
-        <svg class="icon"><use href="#i-globe"/></svg>
+        <svg class="icon icon-sm"><use href="#i-globe"/></svg>
         <span id="lang-current">English</span>
         <svg class="icon icon-sm"><use href="#i-chevron-down"/></svg>
       </button>
-    </div>
+    </nav>
   </header>
 
   <main id="main" tabindex="-1">
@@ -74,93 +74,99 @@
     <!-- Home -->
     <section class="view" id="view-home">
       <div class="hero">
-        <div class="wrap hero-grid">
-          <div class="hero-copy">
-            <p class="eyebrow" data-i18n="hero_eyebrow"></p>
-            <h1><span data-i18n="hero_title_a"></span> <span class="hl" data-i18n="hero_title_b"></span></h1>
-            <p class="lead" data-i18n="hero_sub"></p>
-            <div class="hero-actions">
-              <button class="btn btn-accent btn-lg" type="button" data-action="camera">
-                <svg class="icon"><use href="#i-camera"/></svg><span data-i18n="take_photo"></span>
-              </button>
-              <button class="btn btn-light-outline" type="button" data-action="library">
-                <svg class="icon"><use href="#i-image"/></svg><span data-i18n="choose_photos"></span>
-              </button>
-            </div>
-            <button class="btn btn-quiet" type="button" data-action="example">
-              <svg class="icon"><use href="#i-file"/></svg><span data-i18n="see_example"></span>
-              <svg class="icon icon-sm flip-rtl"><use href="#i-chevron-right"/></svg>
+        <div class="wrap hero-center">
+          <p class="label"><span class="dot"></span><span data-i18n="hero_eyebrow"></span></p>
+          <h1 class="display"><span data-i18n="hero_title_a"></span> <span data-i18n="hero_title_b"></span></h1>
+          <p class="lead" data-i18n="hero_sub"></p>
+          <div class="hero-actions">
+            <button class="btn btn-primary btn-lg" type="button" data-action="camera">
+              <svg class="icon"><use href="#i-camera"/></svg><span data-i18n="take_photo"></span>
+            </button>
+            <button class="btn btn-secondary btn-lg" type="button" data-action="library">
+              <svg class="icon"><use href="#i-image"/></svg><span data-i18n="choose_photos"></span>
             </button>
           </div>
+        </div>
 
-          <!-- A looping animation of the app at work: scan, hide private numbers, explain. -->
-          <div class="demo" aria-hidden="true">
-            <div class="demo-letter">
-              <span class="dl-head"></span><span class="dl-sub"></span><span class="dl-rule"></span>
-              <div class="dl-row"><span class="dl-label"></span><span class="dl-num"><i class="dl-box b1"></i></span><span class="dl-gap"></span><span class="dl-label"></span><span class="dl-num"><i class="dl-box b2"></i></span></div>
-              <div class="dl-row"><span class="dl-label"></span><span class="dl-num"><i class="dl-box b3"></i></span></div>
-              <span class="dl-title"></span>
-              <span class="dl-line"></span><span class="dl-line short"></span>
-              <span class="dl-line hi"></span>
-              <span class="dl-line"></span><span class="dl-line mid"></span><span class="dl-line"></span><span class="dl-line short"></span>
-              <div class="demo-scan"></div>
+        <!-- Lines like text being scanned; a scan sweeps across them. The pill asks the app's question in every language. -->
+        <div class="wrap">
+          <div class="lines-panel">
+            <svg class="lines" id="hero-lines" aria-hidden="true" preserveAspectRatio="none"></svg>
+            <div class="ask">
+              <p class="ask-text" aria-hidden="true"><span id="ask-text"></span><span class="caret"></span></p>
+              <button class="ask-btn" type="button" data-action="example"><span data-i18n="see_example"></span><svg class="icon icon-sm flip-rtl"><use href="#i-chevron-right"/></svg></button>
             </div>
-            <div class="demo-card">
-              <p class="badge badge-high"><svg class="icon icon-sm"><use href="#i-clock"/></svg><span id="preview-badge"></span></p>
-              <p class="preview-title" data-i18n="preview_title"></p>
-              <p class="preview-summary" data-i18n="preview_summary"></p>
-              <ul class="preview-list">
-                <li><span class="tick t1"><svg class="icon"><use href="#i-check"/></svg></span><span data-i18n="preview_item1"></span></li>
-                <li><span class="tick t2"><svg class="icon"><use href="#i-check"/></svg></span><span data-i18n="preview_item2"></span></li>
-              </ul>
-            </div>
-            <p class="demo-chip chip-hidden"><i class="chip-box"></i><span data-i18n="demo_hidden"></span></p>
-            <p class="demo-chip chip-deadline"><span class="chip-check"><svg class="icon"><use href="#i-check"/></svg></span><span data-i18n="demo_deadline"></span></p>
           </div>
         </div>
       </div>
 
-      <section class="band" aria-labelledby="how-title">
-        <div class="wrap">
-          <h2 id="how-title" data-i18n="how_title"></h2>
-          <ol class="steps">
-            <li><span class="step-num">1</span><svg class="icon step-icon"><use href="#i-camera"/></svg><h3 data-i18n="how1_t"></h3><p data-i18n="how1_d"></p></li>
-            <li><span class="step-num">2</span><svg class="icon step-icon"><use href="#i-quote"/></svg><h3 data-i18n="how2_t"></h3><p data-i18n="how2_d"></p></li>
-            <li><span class="step-num">3</span><svg class="icon step-icon"><use href="#i-check-circle"/></svg><h3 data-i18n="how3_t"></h3><p data-i18n="how3_d"></p></li>
-          </ol>
+      <section class="split" aria-labelledby="why-title">
+        <div class="wrap split-grid">
+          <h2 class="display-md" id="why-title" data-i18n="why_title"></h2>
+          <div>
+            <p class="label"><span class="dot"></span><span data-i18n="why_label"></span></p>
+            <p class="split-body" data-i18n="why_body"></p>
+          </div>
         </div>
       </section>
 
-      <section class="band band-alt" aria-labelledby="types-title">
-        <div class="wrap">
-          <h2 id="types-title" data-i18n="types_title"></h2>
-          <ul class="chips">
-            <li data-i18n="type_health"></li><li data-i18n="type_food"></li><li data-i18n="type_tax"></li>
-            <li data-i18n="type_housing"></li><li data-i18n="type_utility"></li><li data-i18n="type_school"></li>
-            <li data-i18n="type_immigration"></li><li data-i18n="type_medical"></li>
+      <section class="constellation" aria-labelledby="types-title">
+        <div class="wrap constellation-inner">
+          <svg class="curves" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M160 140 C 300 60, 420 80, 500 300"/>
+            <path d="M840 120 C 720 60, 600 120, 500 300"/>
+            <path d="M120 420 C 260 470, 380 420, 500 300"/>
+            <path d="M880 460 C 760 540, 620 480, 500 300"/>
+            <path d="M500 40 C 520 120, 480 200, 500 300"/>
+            <path d="M500 570 C 470 480, 530 400, 500 300"/>
+          </svg>
+          <div class="constellation-center">
+            <h2 class="display-md" id="types-title" data-i18n="types_heading"></h2>
+            <p data-i18n="types_sub"></p>
+          </div>
+          <ul class="nodes">
+              <li class="node node-1"><span class="node-label" data-i18n="type_health"></span><span class="node-bars"></span></li>
+              <li class="node node-2"><span class="node-label" data-i18n="type_food"></span></li>
+              <li class="node node-3"><span class="node-label" data-i18n="type_tax"></span><span class="node-bars"></span></li>
+              <li class="node node-4"><span class="node-label" data-i18n="type_housing"></span></li>
+              <li class="node node-5"><span class="node-label" data-i18n="type_utility"></span><span class="node-bars"></span></li>
+              <li class="node node-6"><span class="node-label" data-i18n="type_school"></span></li>
+              <li class="node node-7"><span class="node-label" data-i18n="type_immigration"></span><span class="node-bars"></span></li>
+              <li class="node node-8"><span class="node-label" data-i18n="type_medical"></span></li>
           </ul>
         </div>
       </section>
 
-      <section class="band" aria-labelledby="trust-title">
+      <section class="how" aria-labelledby="how-title">
         <div class="wrap">
-          <h2 id="trust-title" data-i18n="trust_title"></h2>
-          <div class="trust-grid">
-            <div class="trust-item"><svg class="icon"><use href="#i-eye-off"/></svg><h3 data-i18n="trust1_t"></h3><p data-i18n="trust1_d"></p></div>
-            <div class="trust-item"><svg class="icon"><use href="#i-shield"/></svg><h3 data-i18n="trust2_t"></h3><p data-i18n="trust2_d"></p></div>
-            <div class="trust-item"><svg class="icon"><use href="#i-quote"/></svg><h3 data-i18n="trust3_t"></h3><p data-i18n="trust3_d"></p></div>
-          </div>
+          <p class="label"><span class="dot"></span><span data-i18n="how_title" id="how-title"></span></p>
+          <ol class="how-grid">
+            <li class="how-card tone-sand"><span class="how-num">01</span><svg class="icon"><use href="#i-camera"/></svg><h3 data-i18n="how1_t"></h3><p data-i18n="how1_d"></p></li>
+            <li class="how-card tone-lavender"><span class="how-num">02</span><svg class="icon"><use href="#i-quote"/></svg><h3 data-i18n="how2_t"></h3><p data-i18n="how2_d"></p></li>
+            <li class="how-card tone-white"><span class="how-num">03</span><svg class="icon"><use href="#i-check-circle"/></svg><h3 data-i18n="how3_t"></h3><p data-i18n="how3_d"></p></li>
+          </ol>
         </div>
       </section>
-      <section class="cta-band" aria-labelledby="cta-title">
-        <div class="wrap cta-inner">
-          <div>
-            <h2 id="cta-title" data-i18n="cta_title"></h2>
-            <p data-i18n="cta_sub"></p>
-          </div>
-          <div class="cta-actions">
-            <button class="btn btn-accent btn-lg" type="button" data-action="camera"><svg class="icon"><use href="#i-camera"/></svg><span data-i18n="take_photo"></span></button>
-            <button class="btn btn-light-outline" type="button" data-action="example"><svg class="icon"><use href="#i-file"/></svg><span data-i18n="see_example"></span></button>
+
+      <section class="trust" aria-labelledby="trust-title">
+        <div class="wrap split-grid">
+          <h2 class="display-md" id="trust-title" data-i18n="trust_title"></h2>
+          <ol class="spec">
+            <li><span class="spec-num">01</span><div><h3 data-i18n="trust1_t"></h3><p data-i18n="trust1_d"></p></div></li>
+            <li><span class="spec-num">02</span><div><h3 data-i18n="trust2_t"></h3><p data-i18n="trust2_d"></p></div></li>
+            <li><span class="spec-num">03</span><div><h3 data-i18n="trust3_t"></h3><p data-i18n="trust3_d"></p></div></li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="dark-cta" aria-labelledby="cta-title">
+        <div class="wrap dark-cta-inner">
+          <p class="label label-light" data-i18n="cta_label"></p>
+          <h2 class="display" id="cta-title" data-i18n="cta_title"></h2>
+          <p class="dark-sub" data-i18n="cta_sub"></p>
+          <div class="hero-actions">
+            <button class="btn btn-light btn-lg" type="button" data-action="camera"><svg class="icon"><use href="#i-camera"/></svg><span data-i18n="take_photo"></span></button>
+            <button class="btn btn-dark-outline btn-lg" type="button" data-action="example"><svg class="icon"><use href="#i-file"/></svg><span data-i18n="see_example"></span></button>
           </div>
         </div>
       </section>
@@ -241,9 +247,32 @@
 
   <footer class="site-footer">
     <div class="wrap">
-      <p class="footer-brand"><svg class="icon"><use href="#i-mail"/></svg>Open Letter</p>
-      <p data-i18n="footer"></p>
-      <a class="footer-link" href="https://github.com/Sheila-Sil/open-letter" target="_blank" rel="noopener"><svg class="icon"><use href="#i-github"/></svg><span data-i18n="footer_source"></span></a>
+      <div class="footer-card">
+        <div class="footer-top">
+          <p class="footer-brand"><svg class="icon"><use href="#i-mail"/></svg>Open Letter</p>
+          <div class="footer-cols">
+            <div>
+              <p class="footer-head" data-i18n="footer_app"></p>
+              <ul>
+                <li><button type="button" data-action="example" data-i18n="see_example"></button></li>
+                <li><button type="button" data-action="camera" data-i18n="take_photo"></button></li>
+              </ul>
+            </div>
+            <div>
+              <p class="footer-head" data-i18n="footer_project"></p>
+              <ul>
+                <li><a href="https://github.com/Sheila-Sil/open-letter" target="_blank" rel="noopener" data-i18n="footer_source"></a></li>
+                <li><a href="https://github.com/Sheila-Sil/open-letter/issues" target="_blank" rel="noopener" data-i18n="report_problem"></a></li>
+              </ul>
+            </div>
+            <div>
+              <p class="footer-head" data-i18n="footer_languages"></p>
+              <ul id="footer-langs"></ul>
+            </div>
+          </div>
+        </div>
+        <p class="footer-note" data-i18n="footer"></p>
+      </div>
     </div>
   </footer>
 

@@ -120,9 +120,8 @@ function renderLanguageUI() {
       </button>
     </li>`).join('');
 
-  const due = new Date(+todayUTC() + 21 * DAY);
-  const shortDate = new Intl.DateTimeFormat(current.locale, { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(due);
-  $('#preview-badge').textContent = t('preview_badge', { date: shortDate, n: 21 });
+  $('#footer-langs').innerHTML = LANGS.map((lang) => `
+    <li><button type="button" data-action="set-lang" data-lang="${lang.code}" lang="${lang.code}" dir="${lang.dir}">${lang.native}</button></li>`).join('');
   $('#write-reply-label').textContent = t('write_reply');
 }
 
@@ -134,6 +133,67 @@ function changeLanguage(code) {
     if (state.reply) state.reply = sampleReply(code);
   }
   rerender();
+}
+
+// ---------- Home page decoration ----------
+
+// Vertical lines, like lines of text seen sideways. Some are tinted, a couple lean,
+// and a "scan" sweeps across them (see .lines in styles.css).
+function drawHeroLines() {
+  const svg = $('#hero-lines');
+  const perRow = window.innerWidth < 640 ? 34 : 64;
+  const widths = [1, 1.5, 2.5, 3.5, 4.5];
+  // A fixed pattern (not random) so the page looks the same every time.
+  const pick = (i, list) => list[(i * 7 + Math.floor(i / 3)) % list.length];
+  const lines = [];
+  for (let row = 0; row < 2; row++) {
+    for (let i = 0; i < perRow; i++) {
+      const n = row * perRow + i;
+      const x = ((i + 0.5 + row * 0.5) / (perRow + 0.5)) * 1000;
+      const tint = n % 17 === 5 ? 'violet' : n % 23 === 11 ? 'peach' : '';
+      const y1 = row * 150 + 4;
+      const y2 = row * 150 + 146;
+      const lean = (row === 0 && i === 4) || (row === 1 && i === perRow - 7);
+      const x2 = lean ? x + (row === 0 ? 34 : -34) : x;
+      lines.push(`<line x1="${x.toFixed(1)}" y1="${y1}" x2="${x2.toFixed(1)}" y2="${y2}" class="${tint}" style="--w:${pick(n, widths)};--i:${i}"/>`);
+    }
+  }
+  svg.setAttribute('viewBox', '0 0 1000 300');
+  svg.innerHTML = lines.join('');
+}
+
+// Types the app's question in each language, one after another.
+const QUESTIONS = [
+  { text: 'What does this letter say?', lang: 'en', dir: 'ltr' },
+  { text: '¿Qué dice esta carta?', lang: 'es', dir: 'ltr' },
+  { text: '这封信是什么意思？', lang: 'zh', dir: 'ltr' },
+  { text: 'Thư này nói gì?', lang: 'vi', dir: 'ltr' },
+  { text: 'ماذا تقول هذه الرسالة؟', lang: 'ar', dir: 'rtl' },
+];
+
+async function typeQuestions() {
+  const el = $('#ask-text');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const q = QUESTIONS.find((item) => item.lang === getLang().code);
+    Object.assign(el, { textContent: q.text, lang: q.lang, dir: q.dir });
+    return;
+  }
+  for (let i = 0; ; i = (i + 1) % QUESTIONS.length) {
+    const q = QUESTIONS[i];
+    const chars = Array.from(q.text);
+    el.lang = q.lang;
+    el.dir = q.dir;
+    for (let n = 1; n <= chars.length; n++) {
+      el.textContent = chars.slice(0, n).join('');
+      await wait(55);
+    }
+    await wait(1800);
+    for (let n = chars.length - 1; n >= 0; n--) {
+      el.textContent = chars.slice(0, n).join('');
+      await wait(22);
+    }
+    await wait(250);
+  }
 }
 
 // ---------- Adding photos ----------
@@ -760,5 +820,7 @@ $('#lang-dialog').addEventListener('click', (event) => {
 
 setLang(detectLang());
 renderLanguageUI();
+drawHeroLines();
+typeQuestions();
 history.replaceState({ view: 'home' }, '', location.pathname);
 show('home', { push: false, focus: false });
