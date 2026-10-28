@@ -88,7 +88,6 @@ h1[tabindex="-1"]:focus { outline: none; }
   display: inline-flex; align-items: center; gap: 10px; margin: 0 0 18px;
   font-family: var(--mono); font-size: .8125rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--ink);
 }
-.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--violet); flex: none; }
 .label-light { color: #a9a6a0; }
 
 .icon { width: 24px; height: 24px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
